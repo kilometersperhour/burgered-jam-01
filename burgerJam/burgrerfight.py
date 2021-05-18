@@ -19,7 +19,7 @@ class Burger(object):
         #self.hands[0] = pygame.image.load("arm_idle.png")
         #self.hands[1] = pygame.image.load("arm_punched.png")
         #self.hands[2] = pygame.image.load("arm_punching.png")
-        self.hands = [pygame.image.load("arm_idle.png",),  pygame.image.load("arm_punching.png"), pygame.image.load("arm_punched.png"), pygame.image.load("arm_idle.png",)]
+        self.hands = [pygame.image.load("arm_idle.png",),  pygame.image.load("arm_punching.png"), pygame.image.load("arm_punched.png"), pygame.image.load("arm_idle.png",), pygame.image.load("arm_block.png",)]
         self.handIndexL = 0
         self.handIndexR = 0
         center1 = 100
@@ -109,18 +109,29 @@ class game(object):
         self.cooldown = 300
 
 
+
     def draw(self, surf):
         surf.blit(self.bg, self.center)
+    def col_check(x,y,w,h,x2,y2,w2,h2):
+        if (x < (x2 + w2) and (x + w) > x2 and y < (y2 + h2) and (h + y) > y2):
+            return True
 
     def drawHealth(self, surf):
-
+        BLACK = (0,0,0)
+        pygame.draw.rect(self.screen,BLACK,(40,30,520,60))
         pygame.draw.rect(self.screen,RED,(50,40,500,40))
+
         pygame.draw.rect(self.screen,GREEN,(50,40,self.player.health*5,40))
+        pygame.draw.rect(self.screen,BLACK,(640,30,520,60))
         pygame.draw.rect(self.screen,RED,(650,40,500,40))
         pygame.draw.rect(self.screen,GREEN,(650,40,500,40))
 
     def run(self):
+
+        #hitSound = pygame.mixer.Sound("hit.wav")
+        switch = 0
         pygame.init()
+        punchSound = [pygame.mixer.Sound("low_punch.wav"), pygame.mixer.Sound("normal_punch.wav"), pygame.mixer.Sound("high_punch.wav")]
         pygame.mixer.music.load('burgarena.mp3')
         pygame.mixer.music.set_volume(0.2)
         pygame.mixer.music.play(loops = -1)
@@ -139,31 +150,38 @@ class game(object):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 print(event.button)
                 if event.button == 1:
-
+                    punchSound[0].play()
                     #for i in range(2):
                     self.player.handIndexL += 1
 
                     if self.player.handIndexL == 3:
                         self.player.handIndexL = 0
 
-
-
-
-                    #self.player.handIndexL = 0
-                    #self.player.punchLeft()
-                    #for i in range(2):
-
-                    #self.player.handIndexL += 2
-                    #self.player.handIndexL = 0
-
-
                 if event.button == 2:
-                    self.player.block()
+                    #self.player.block()
+                    punchSound[1].play()
+                    if switch == 1:
+                        switch = switch - 1
+                        self.player.handIndexR = 0
+
+                    else:
+                        self.player.handIndexR = 4
+                        switch = switch + 1
+
+
+
                 if event.button == 3:
+                    punchSound[2].play()
+                    if self.player.handIndexR == 4:
+                        self.player.handIndexR = 0
                     self.player.handIndexR += 1
 
                     if self.player.handIndexR == 3:
                         self.player.handIndexR = 0
+
+            #while(self.col_check() and (self.player.handIndexL != 0 or self.player.handIndexR !=0)):
+
+
             self.draw(self.screen)
 
             self.drawHealth(self.screen)
