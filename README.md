@@ -1,4 +1,4 @@
-# burgered-jam-01 (Burgarena)
+# burgered-jam-01 (Street Burger)
 For the 2hr Burgered Jam, https://itch.io/jam/burgered-jam. Unsubmitted. 
 
 # Code development credits 
