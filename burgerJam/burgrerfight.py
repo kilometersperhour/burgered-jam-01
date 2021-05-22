@@ -22,8 +22,8 @@ class Burger(object):
         self.hands = [pygame.image.load("arm_idle.png",),  pygame.image.load("arm_punching.png"), pygame.image.load("arm_punched.png"), pygame.image.load("arm_idle.png",), pygame.image.load("arm_block.png",)]
         self.handIndexL = 0
         self.handIndexR = 0
-        center1 = 100
-        center2 = 200
+        center1 = 50
+        center2 = 500
         self.center = [center1, center2]
         self.centereyes = [center1+35, center2+30]
         self.centerRightArm = [center1+60 , center2+45]
@@ -125,9 +125,13 @@ class game(object):
         pygame.draw.rect(self.screen,BLACK,(640,30,520,60))
         pygame.draw.rect(self.screen,RED,(650,40,500,40))
         pygame.draw.rect(self.screen,GREEN,(650,40,500,40))
+        pygame.draw.rect(self.screen,RED,(0,560,1200,40))
 
     def run(self):
 
+        v = 5
+        m = 1
+        isjump = False
         #hitSound = pygame.mixer.Sound("hit.wav")
         switch = 0
         pygame.init()
@@ -144,8 +148,53 @@ class game(object):
 
             keys = pygame.key.get_pressed()
             move_x = keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]
-            move_y = keys[pygame.K_DOWN] - keys[pygame.K_UP]
-            self.player.move(move_x * 5, move_y * 5)
+            #move_y = keys[pygame.K_DOWN] #- keys[pygame.K_UP]
+            move_y = 0
+
+            if(self.player.center[0] > 10 and self.player.center[0] < 1070):
+                self.player.move(move_x * 5, move_y*5)
+            if(self.player.center[0] <=25):
+                self.player.center[0]+=10
+                self.player.centereyes[0]+= 10
+                self.player.centerLeftArm[0]+= 10
+                self.player.centerRightArm[0]+= 10
+            elif(self.player.center[0] >= 1060):
+                self.player.center[0]-=10
+                self.player.centereyes[0]-= 10
+                self.player.centerLeftArm[0]-= 10
+                self.player.centerRightArm[0]-= 10
+                #self.player.move(move_x * 5, move_y*5)
+            keys = pygame.key.get_pressed()
+            if isjump == False:
+        # if space bar is pressed
+                if keys[pygame.K_UP]:
+            # make isjump equal to True
+                    isjump = True
+            if isjump :
+        # calculate force (F). F = 1 / 2 * mass * velocity ^ 2.
+                F =(1 / 2)*m*(v**2)
+        # change in the y co-ordinate
+        #eyes arms
+                self.player.center[1]-= F *2
+                self.player.centereyes[1]-= F*2
+                self.player.centerLeftArm[1]-= F*2
+                self.player.centerRightArm[1]-= F*2
+                #self.player.center[0]-= F
+        # decreasing velocity while going up and become negative while coming down
+                v = v-1
+        # object reached its maximum height
+            if v<0:
+            # negative sign is added to counter negative velocity
+                m =-1
+        # objected reaches its original state
+            if v ==-6:
+            # making isjump equal to false
+                isjump = False
+            # setting original values to v and m
+                v = 5
+                m = 1
+    # creates time delay of 10ms
+            pygame.time.delay(10)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 print(event.button)
@@ -186,8 +235,9 @@ class game(object):
 
             self.drawHealth(self.screen)
             #self.screen.fill([255, 255, 255])
-            self.player.draw(self.screen)
             self.enemy.draw(self.screen)
+            self.player.draw(self.screen)
+
 
             #pygame.mixer.music.load('burgarena.mp3')
             #pygame.mixer.music.set_volume(0.2)
