@@ -39,9 +39,34 @@ class ProgressTests(unittest.TestCase):
 
     def test_roster_unlocks_at_one_three_and_five_cpu_wins(self):
         progress = Progress.load(DEFAULTS, self.path)
-        for wins, count in ((0, 2), (1, 3), (3, 4), (5, 5)):
+        for wins, count in ((0, 7), (1, 8), (3, 9), (5, 10)):
             progress.wins = wins
             self.assertEqual(sum(progress.unlocked(name) for name in CHARACTERS), count)
+
+    def test_v1_profiles_preserve_progress_and_audio_with_new_control_defaults(self):
+        self.write({"version": 1, "wins": 4, "volume": .6, "muted": True,
+                    "bindings": {"p1_jab": 102, "p2_jab": 106}})
+        defaults = {"lp": 117, "mp": 105}
+        progress = Progress.load(defaults, self.path)
+        self.assertEqual((progress.wins, progress.volume, progress.muted), (4, .6, True))
+        self.assertEqual(progress.bindings, defaults)
+        self.assertTrue(progress.save())
+        self.assertEqual(json.loads(self.path.read_text())["version"], 2)
+
+    def test_difficulty_round_trips_and_invalid_values_fall_back(self):
+        progress = Progress.load(DEFAULTS, self.path)
+        progress.difficulty = "hard"
+        progress.save()
+        self.assertEqual(Progress.load(DEFAULTS, self.path).difficulty, "hard")
+        self.write({"version": 2, "difficulty": "impossible"})
+        self.assertEqual(Progress.load(DEFAULTS, self.path).difficulty, "medium")
+
+    def test_new_jump_binding_is_added_without_losing_existing_remaps(self):
+        defaults = {"lp": 117, "jump": 32, "jump_alt": 119}
+        self.write({"version": 2, "bindings": {"lp": 104, "jump": 32}, "wins": 3})
+        progress = Progress.load(defaults, self.path)
+        self.assertEqual(progress.bindings, {"lp": 104, "jump": 32, "jump_alt": 119})
+        self.assertEqual(progress.wins, 3)
 
     def test_corrupt_and_future_saves_are_not_overwritten(self):
         for content in ("not json", '{"version": 99, "wins": 200}', "null", "[]"):

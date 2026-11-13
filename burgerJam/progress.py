@@ -6,9 +6,9 @@ import math
 import os
 from pathlib import Path
 
-CHARACTERS = ("Burger", "Tomato", "Italian Scallion", "French Fries", "Pizza")
-UNLOCK_WINS = (0, 0, 1, 3, 5)
-SAVE_VERSION = 1
+from .roster import CHARACTERS, UNLOCK_WINS
+
+SAVE_VERSION = 2
 
 
 @dataclass
@@ -20,6 +20,7 @@ class Progress:
     bindings: dict[str, int] = field(default_factory=dict)
     warning: str = ""
     writable: bool = True
+    difficulty: str = "medium"
 
     @classmethod
     def load(cls, defaults, path=None):
@@ -34,7 +35,7 @@ class Progress:
             progress.warning = "Save unavailable. Progress stays in memory this session."
             progress.writable = False
             return progress
-        if not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] != SAVE_VERSION:
+        if not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] not in (1, SAVE_VERSION):
             progress.warning = "Unsupported save version. Existing save will be preserved."
             progress.writable = False
             return progress
@@ -46,11 +47,14 @@ class Progress:
             progress.volume = max(0, min(1, volume))
         if type(data.get("muted")) is bool:
             progress.muted = data["muted"]
+        if data.get("difficulty") in ("easy", "medium", "hard"):
+            progress.difficulty = data["difficulty"]
         bindings = data.get("bindings")
-        if (isinstance(bindings, dict) and bindings.keys() == defaults.keys()
-                and all(type(key) is int and 0 < key < 2 ** 31 for key in bindings.values())
-                and len(set(bindings.values())) == len(bindings)):
-            progress.bindings = bindings
+        if isinstance(bindings, dict) and bindings.keys() <= defaults.keys():
+            merged = dict(defaults, **bindings)
+            if (all(type(key) is int and 0 < key < 2 ** 31 for key in merged.values())
+                    and len(set(merged.values())) == len(merged)):
+                progress.bindings = merged
         return progress
 
     def unlocked(self, character):
@@ -60,7 +64,7 @@ class Progress:
         if not self.writable:
             return False
         data = {"version": SAVE_VERSION, "wins": self.wins, "volume": self.volume, "muted": self.muted,
-                "bindings": self.bindings}
+                "bindings": self.bindings, "difficulty": self.difficulty}
         temporary = self.path.with_name(self.path.name + ".tmp")
         try:
             self.path.parent.mkdir(parents=True, exist_ok=True)
